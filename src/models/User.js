@@ -1,7 +1,6 @@
 const  mongoose = require('mongoose');
 const bcrypt = require('bcrypt')
 
-const {hash} = require('../middlewares/authMiddleware')
 const userSchema = new mongoose.Schema({
     name: String , 
     userName: {type: String ,required: true,  unique: true} , 
