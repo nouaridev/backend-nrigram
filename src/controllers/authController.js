@@ -22,7 +22,7 @@ const signUp = async(req , res ,next)=>{
         const tkn = generateToken({
             _id: savedUser._id ,
             email: savedUser.email ,
-             userName: savedUser.userName })
+            userName: savedUser.userName })
              
         res.json({
             succes: true  , 

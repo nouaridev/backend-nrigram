@@ -2,8 +2,7 @@ const  mongoose = require('mongoose');
 const bcrypt = require('bcrypt')
 
 const userSchema = new mongoose.Schema({
-    name: String , 
-    userName: {type: String ,required: true,  unique: true} , 
+    userName: {type: String ,required: true} , 
     email: {type: String , required: true , unique: true } , 
     phoneNumber: String , 
     bio: String  ,
@@ -14,7 +13,9 @@ const userSchema = new mongoose.Schema({
         shareData: { type: Boolean, default: false }
     } ,
     badjes:[String] ,
-    password: {type: String , required: true }
+    password: {type: String , required: true } , 
+    online: {type: Boolean , default :  false} ,
+    lastSeen: {type: Date , default: null }
 })
 
 userSchema.pre('save' , async function(next) {
