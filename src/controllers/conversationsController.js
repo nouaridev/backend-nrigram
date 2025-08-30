@@ -2,7 +2,9 @@ const  Message = require('../models/message')
 const  Conversation = require('../models/conversation') 
 
 
-const {checkConversation , createConverstion ,checkBelongs} = require('../service/conversationService')
+const { getIo } = require('../service/socket');
+const {checkConversation , createConverstion ,checkBelongs} = require('../service/conversationService');
+const { User } = require('../models/User');
 
 const sendMessage = async (req ,res ,next)=>{
     try{
@@ -32,7 +34,11 @@ const sendMessage = async (req ,res ,next)=>{
         }) 
 
         let populateMessage = await Message.findById(savedMessage._id).populate('sender' , 'name email pfpUrl')
-        res.status(200).json({
+        
+        const io = getIo() ; 
+        io.to(conversationId).emit('recieveMessage' , populateMessage) 
+
+        res.status(200).json({ 
             success: true , 
             message: populateMessage 
         })
@@ -45,7 +51,7 @@ const sendMessage = async (req ,res ,next)=>{
 const getConversations = async (req ,res ,next)=>{
     try {
         let id = req.user._id ; 
-        let conversations =await Conversation.find({participants: id}).populate('participants' , 'userName email pfpUrl').populate('lastMessage' , 'content type') ;
+        let conversations =await Conversation.find({participants: id}).populate('participants' , 'userName email pfpUrl').populate('lastMessage' , 'content type readBy') ;
         res.json({
             success: true , 
             conversations: conversations
@@ -67,13 +73,21 @@ const getMessages = async (req, res ,next)=>{
                 error: 'there is no conversation with id '+conversationId 
             })
         }
-        
+
         const messages = await Message.find({"conversation": conversationId})
         .populate({path:"conversation" , populate: {path: "participants" , select: "userName email pfpUrl"}})
         res.json({
             success: true ,
             messages: messages
         })
+
+        const userId = req.user._id ;
+        await Message.updateMany({conversation: conversationId , sender: {$ne: userId} , readBy: {$ne: userId}},{
+            $push:{readBy: userId }
+        })
+        
+        const io = getIo() ; 
+        io.to(conversationId).emit("conversationOpened" , conversationId) // hadi rigli 3la 7sabha 
     } catch (error) {
         next(error)
     }

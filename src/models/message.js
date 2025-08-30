@@ -19,7 +19,9 @@ const messageSchema = new mongoose.Schema({
     type: String,
     enum: ["text", "image", "file"],
     default: "text"
-  }
+  },
+  readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+  
 }, { timestamps: true });
 
 module.exports = mongoose.model("Message", messageSchema);
