@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 
 const userSchema = new mongoose.Schema({
     userName: {type: String ,required: true} , 
+    name: {type: String ,required: true} , 
     email: {type: String , required: true , unique: true } , 
     phoneNumber: String , 
     bio: String  ,
@@ -27,6 +28,19 @@ userSchema.pre('save' , async function(next) {
     } catch (err) {
         console.log('Error while hashing password', err);
         next(err);
+    }
+})
+
+userSchema.pre('findOneAndUpdate' , async function(next) {
+    try{
+        const update = this.getUpdate() ; 
+        if(update.password){
+            update.password = await bcrypt.hash(update.password , 10) ; 
+            this.setUpdate(update);
+        }
+        next()
+    }catch(err){
+        next(err)
     }
 })
 

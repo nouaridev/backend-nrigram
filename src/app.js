@@ -2,7 +2,8 @@ const express = require('express');
 const app = express() ; 
 
 app.use(express.json()) ; 
-
+ app.use(express.urlencoded({ extended: true })); 
+ 
 const logger = require('./middlewares/logger') 
 app.use(logger); 
 
@@ -11,6 +12,9 @@ app.use('/api/user' , userRouter)
 
 const conversationsRouter = require('./routes/conversationRoutes') ; 
 app.use('/api/main' , conversationsRouter)
+
+const menuRouter = require('./routes/menuRoutes') ; 
+app.use('/api/menu' , menuRouter)
 
 const errHandler = require('./middlewares/errorHandler')
 app.use(errHandler)

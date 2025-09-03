@@ -22,4 +22,22 @@ const uploadPfp = async (req ,res ,next)=>{
     }
 }
 
-module.exports = uploadPfp ; 
+const updatePfp = async( req ,res ,next)=>{
+    if(!req.file){return next()}
+    try {
+        let cloudStram = cloudinary.uploader.upload_stream({folder: 'NRIGRAM/pfps'} , (err ,res)=>{
+            if(err){
+                return next(err)
+            }
+            req.pfpUrl = res.secure_url ; 
+            next()
+        })
+
+        stream.Readable.from(req.file.buffer).pipe(cloudStram)
+
+    } catch (error) {
+        return next(error)
+    }
+}
+
+module.exports = {uploadPfp , updatePfp} ; 
