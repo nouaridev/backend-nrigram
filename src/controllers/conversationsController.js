@@ -10,7 +10,7 @@ const sendMessage = async (req ,res ,next)=>{
     try{
         let conversationId = req.params.conversationId ; 
         const senderId = req.user._id ; 
-        const recipientId = req.body.reciepientId
+        const recipientId = req.body.recipientId
 
         if(!conversationId){
             let conversation = await checkConversation(senderId , recipientId) ; 
@@ -92,4 +92,58 @@ const getMessages = async (req, res ,next)=>{
         next(error)
     }
 }
-module.exports = {sendMessage ,getConversations ,getMessages}
+
+
+
+const getSearchResults = async (req ,res ,next)=>{
+    try{
+        let searchTerm = req.query.term ; 
+        let type = req.query.type ;
+        if(!searchTerm || searchTerm.trim() === ''){
+            return res.json({
+                success: false ,
+                error: 'Invalid search term'
+            })
+        }
+        if(type === 'people'){
+            let users = await User.find({
+                $or: [
+                    { userName: { $regex: searchTerm, $options: 'i' } },
+                    { email: { $regex: searchTerm, $options: 'i' } }
+                ]
+            });
+            return res.json({
+                success: true ,
+                users: users
+            })
+        }else if(type === 'conversations')  {
+            let conversations = await Conversation.aggregate([
+                { $lookup:{from: 'users' , localField: 'participants' ,foreignField: '_id' , as: 'participants'}},
+                { $lookup:{from:'messages' , localField: "lastMessage" , foreignField: '_id' , as: 'lastMessage'}},
+                { $unwind:{ path: "$lastMessage" , preserveNullAndEmptyArrays: true } },
+                {
+                    $match: {
+                    $or: [
+                        { "participants.userName": { $regex: searchTerm, $options: "i" } },
+                        { "lastMessage.content": { $regex: searchTerm, $options: "i" } }
+                    ]
+                    }
+                },
+                { $project:{
+                    participants:{userName:1 , email:1 ,pfpUrl:1},
+                    lastMessage: {content: 1 , type: 1 ,readBy: 1 },
+                    updatedAt: 1 
+                }}
+            ])
+     
+            return res.json({
+                success: true ,
+                conversations: conversations
+            })
+        }
+
+    } catch (error) {
+        next(error)
+    }
+}
+module.exports = {sendMessage ,getConversations ,getMessages ,getSearchResults}
