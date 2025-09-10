@@ -80,4 +80,29 @@ const signIn = async(req, res ,next) => {
   }
 };
 
-module.exports = {signUp , signIn}
+const refreshToken = async(req, res ,next) => {
+    try{
+        const user = req.user ;  
+        const token = generateToken({
+            _id: user._id,
+            email: user.email,
+            userName: user.userName
+          });
+        
+        const userInfo = await User.findById(user._id).exec() ;
+        res.json({
+            success: true,
+            token , 
+            user: {
+                id: userInfo._id,
+                email: userInfo.email,
+                userName: userInfo.userName,
+                pfpUrl: userInfo.pfpUrl
+            } 
+        });
+    } catch (err) {
+        next(err)
+    }
+};
+
+module.exports = {signUp , signIn , refreshToken}
