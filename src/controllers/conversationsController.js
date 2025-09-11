@@ -5,6 +5,7 @@ const  Conversation = require('../models/conversation')
 const { getIo } = require('../service/socket');
 const {checkConversation , createConverstion ,checkBelongs} = require('../service/conversationService');
 const { User } = require('../models/User');
+const appError = require('../utils/apiError');
 
 const sendMessage = async (req ,res ,next)=>{
     try{
@@ -74,6 +75,7 @@ const getMessages = async (req, res ,next)=>{
             })
         }
 
+       
         const messages = await Message.find({"conversation": conversationId})
         .populate({path:"conversation" , populate: {path: "participants" , select: "userName email pfpUrl"}})
         res.json({
@@ -93,11 +95,49 @@ const getMessages = async (req, res ,next)=>{
     }
 }
 
+const checkConversationExists = async (req , res ,next)=>{
+    try {
+        let userId = req.user._id ; 
+        let recipientId = req.params.recipientId ;
+        let conversation = await checkConversation(userId , recipientId) ; 
+        if(conversation){
+            return res.json({
+                success: true ,
+                conversation: conversation
+            })
+        }
+        return res.json({
+            success: true ,
+            conversation: null 
+        })
+    } catch (error) {
+        next(error)
+    }
+}
 
+const getUserInfo = async(req ,res , next)=>{
+    try {
+        let user = req.params.userId ; 
+        let userInfo = await User.findById(user).select('userName email pfpUrl') ;
+        if(userInfo){
+            res.json({
+                success: true , 
+                user: userInfo
+            })
+        }else{
+            res.status(404).json({
+                success: false ,
+                error: 'User not found'
+            })
+        }
+    } catch (error) {
+        next(error)
+    }
+}
 
 const getSearchResults = async (req ,res ,next)=>{
     try{
-        let searchTerm = req.query.term ; 
+        let searchTerm = req.query.term.trim() ; 
         let type = req.query.type ;
         if(!searchTerm || searchTerm.trim() === ''){
             return res.json({
@@ -146,4 +186,4 @@ const getSearchResults = async (req ,res ,next)=>{
         next(error)
     }
 }
-module.exports = {sendMessage ,getConversations ,getMessages ,getSearchResults}
+module.exports = {sendMessage ,getConversations ,getMessages ,getSearchResults , checkConversationExists ,getUserInfo}
