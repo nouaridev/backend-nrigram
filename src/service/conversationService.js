@@ -22,7 +22,6 @@ const checkBelongs =async (conversationId , userId)=>{
     try{
         let conversation = await Conversation.findById(conversationId) ;
         let participantsIds = conversation.participants.map(p=> `${p._id}`) ;
-        console.log(participantsIds)
         if(!participantsIds.includes(userId.toString())){
             return false 
         }

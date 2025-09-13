@@ -11,8 +11,9 @@ const connectSocket  = (server)=>{
         console.log('user connected: ' + socket.id) ;
         
         socket.on('joinConversation' , (conversationId)=>{
-            socket.join(conversationId); 
-            io.to(conversationId).emit('onlineStatus' , {conversationId , online: true}) ; 
+            console.log(conversationId)
+            socket.join(conversationId.toString()); 
+            io.to(conversationId.toString()).emit('onlineStatus' , {conversationId , online: true}) ; 
             console.log(`User ${socket.id} joined room ${conversationId}`);
         })
 
@@ -21,6 +22,7 @@ const connectSocket  = (server)=>{
                 userId,
                 isTyping, // true = typing, false = stopped
             });
+            console.log(`User ${userId} is ${isTyping ? "typing" : "not typing"} in conversation ${conversationId}`);
         });
 
         socket.on('readConversation' , async({conversationId , userId})=>{
