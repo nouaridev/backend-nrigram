@@ -12,7 +12,7 @@ const connectSocket  = (server)=>{
         
         socket.on('joinConversation' , (conversationId)=>{
             socket.join(conversationId); 
-            socket.to(conversationId).emit('onlineStatus' , {conversationId , online: true}) ; 
+            io.to(conversationId).emit('onlineStatus' , {conversationId , online: true}) ; 
             console.log(`User ${socket.id} joined room ${conversationId}`);
         })
 

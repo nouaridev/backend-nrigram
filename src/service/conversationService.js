@@ -1,16 +1,20 @@
 const Conversation = require('../models/conversation') ;
 
-const createConverstion = (user1 , user2)=>{
-    const conversation = new Conversation({
+const createConverstion = async(user1 , user2)=>{
+   try {
+     const conversation = new Conversation({
         participants: [user1 , user2]
     })
-    const savedConversation = conversation.save();
+    const savedConversation =await conversation.save();
     return savedConversation ;
+   } catch (error) {
+    next(error) ;
+   }
 } 
 const checkConversation = (user1 , user2)=>{
     let conversation = Conversation.findOne({
         participants: {$all: [user1 ,user2]}
-    }).select('_id') ;
+    }) ;
     return conversation ;
 }
 
