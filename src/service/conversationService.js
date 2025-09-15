@@ -1,4 +1,5 @@
 const Conversation = require('../models/conversation') ;
+const { User } = require('../models/User');
 
 const createConverstion = async(user1 , user2)=>{
    try {
@@ -8,7 +9,7 @@ const createConverstion = async(user1 , user2)=>{
     const savedConversation =await conversation.save();
     return savedConversation ;
    } catch (error) {
-    next(error) ;
+    throw error ;
    }
 } 
 const checkConversation = (user1 , user2)=>{
@@ -31,4 +32,10 @@ const checkBelongs =async (conversationId , userId)=>{
     }
 }
 
-module.exports= {createConverstion , checkConversation , checkBelongs}
+const setUserOnlineStatus = (userId , online)=>{
+    User.findByIdAndUpdate(userId , {online:online} , {new:true}).then((user)=>{
+        // console.log(user)
+    })
+}
+
+module.exports= {createConverstion ,setUserOnlineStatus, checkConversation , checkBelongs}

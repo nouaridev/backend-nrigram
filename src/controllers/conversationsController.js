@@ -1,3 +1,4 @@
+const util = require('util'); // top of file
 const  Message = require('../models/message') 
 const  Conversation = require('../models/conversation') 
 
@@ -5,6 +6,7 @@ const { getIo } = require('../service/socket');
 const {checkConversation , createConverstion ,checkBelongs} = require('../service/conversationService');
 const { User } = require('../models/User');
 const appError = require('../utils/apiError');
+const path = require('path');
 
 const sendMessage = async (req ,res ,next)=>{
     try{
@@ -32,12 +34,10 @@ const sendMessage = async (req ,res ,next)=>{
         await Conversation.findByIdAndUpdate(conversationId ,{
             lastMessage: savedMessage._id 
         }) 
+        let populateMessage = await Message.findById(savedMessage._id).populate('sender' , 'name email pfpUrl') ;
 
-        let populateMessage = await Message.findById(savedMessage._id).populate('sender' , 'name email pfpUrl')
-        
         const io = getIo() ;
-        console.log('emitting to room: ' + conversationId)
-        io.to(String(conversationId)).emit('recieveMessage' , populateMessage) 
+        io.to(String(conversationId)).emit('recieveMessage' , populateMessage) ;
 
         res.status(200).json({ 
             success: true , 
@@ -52,13 +52,26 @@ const sendMessage = async (req ,res ,next)=>{
 const getConversations = async (req ,res ,next)=>{
     try {
         let id = req.user._id ; 
-        let conversations =await Conversation.find({participants: id}).populate('participants' , 'userName email pfpUrl').populate('lastMessage' , 'content sender type readBy createdAt').sort({'updatedAt': -1}) ;
+        let conversations =await Conversation.find({participants: id}).populate('participants' , 'userName email pfpUrl online').populate({path:'lastMessage', populate:{path:'sender', select:'userName email pfpUrl'}}).sort({'updatedAt': -1}) ;
         res.json({
             success: true , 
             conversations: conversations
         })
     } catch (error) {
         next(err)
+    }
+}
+
+const getConversation = async (req ,res ,next)=>{
+    try { 
+        let id = req.params.id ; 
+        let conversation = await Conversation.findById(id).populate('participants' , 'userName email online pfpUrl').populate('lastMessage' , 'content sender type readBy createdAt') ;
+        res.json({
+            success: true , 
+            conversation: conversation
+        })
+    } catch (error) {
+        next(error) 
     }
 }
 
@@ -186,4 +199,4 @@ const getSearchResults = async (req ,res ,next)=>{
         next(error)
     }
 }
-module.exports = {sendMessage ,getConversations ,getMessages ,getSearchResults , checkConversationExists ,getUserInfo}
+module.exports = {sendMessage ,getConversations ,getConversation,getMessages ,getSearchResults , checkConversationExists ,getUserInfo}

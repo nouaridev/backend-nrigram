@@ -4,16 +4,23 @@ let io ;
 let jwt = require('jsonwebtoken')
 const Message = require('../models/message') ; 
 let Conversation = require('../models/conversation')
+const {setUserOnlineStatus} = require('./conversationService');
+const { set } = require('mongoose');
 
 const connectSocket  = (server)=>{
-    io = new Server(server  , {cors: {origin: "*"}}) 
+    io = new Server(server  , {cors: {origin: "*"},
+  pingInterval: 5000,  // send ping every 5s
+  pingTimeout: 10000 }) 
     io.on('connection' , (socket)=>{
         console.log('user connected: ' + socket.id) ;
-        
-        socket.on('joinConversation' , (conversationId)=>{
-            console.log(conversationId)
+        socket.userId = socket.handshake.query.userId;
+        socket.joinedConversations = new Set();
+        setUserOnlineStatus(socket.userId , true) ;
+
+        socket.on('joinConversation' , async({conversationId ,userId})=>{
             socket.join(conversationId.toString()); 
-            io.to(conversationId.toString()).emit('onlineStatus' , {conversationId , online: true}) ; 
+            socket.joinedConversations.add(conversationId) ;
+            socket.to(conversationId.toString()).emit('onlineStatus' , {conversationId ,userId,  online: true}) ; 
             console.log(`User ${socket.id} joined room ${conversationId}`);
         })
 
@@ -28,7 +35,8 @@ const connectSocket  = (server)=>{
         socket.on('readConversation' , async({conversationId , userId})=>{
             try{
                 await Message.updateMany({conversation: conversationId , readBy: {$ne: userId} , sender:{$ne:userId}}, {$addToSet:{readBy: userId}}) ; 
-                socket.to(conversationId).emit('conversationRead' , conversationId)
+                console.log(`User ${userId} has read messages in conversation ${conversationId}`);
+                socket.to(conversationId).emit('conversationRead' , {conversationId , userId})
             }catch(err){
                  console.error("Error marking conversation as read:", err);
             }
@@ -52,17 +60,16 @@ const connectSocket  = (server)=>{
         })
 
         socket.on('disconnect', () => {
-            
-            socket.rooms.forEach(room=>{
-                if(room !== socket.id){
-                    socket.to(room).emit('onlineStatus' ,{
-                        conversationId: room , 
-                        online: false 
-                    })
-                }
-            })
-
-            console.log('User disconnected:', socket.id);
+            setUserOnlineStatus(socket.userId , false) ;
+            for(let room of socket.joinedConversations) {
+                io.to(room).emit("onlineStatus", {
+                    conversationId: room,
+                    userId: socket.userId,
+                    online: false,
+                });
+                console.log(`User ${socket.id} left room ${room}`); 
+            };                
+            console.log('User disconnected:', socket.userId);
         });
     }) 
 
