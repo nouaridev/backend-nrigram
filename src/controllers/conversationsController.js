@@ -22,19 +22,19 @@ const sendMessage = async (req ,res ,next)=>{
             }
             conversationId = conversation._id ; 
         }
-        
         let message = new Message({
             conversation: conversationId , 
             sender: req.user._id , 
-            content : req.body.content  , 
-            type: req.body.type 
+            type: req.body.type , 
         })
+        if(req.body.content){message.content= req.body.content}
+        if(req.img){message.img = req.img}
         let savedMessage = await message.save() ;
 
         await Conversation.findByIdAndUpdate(conversationId ,{
             lastMessage: savedMessage._id 
         }) 
-        let populateMessage = await Message.findById(savedMessage._id).populate('sender' , 'name email pfpUrl') ;
+        let populateMessage = await Message.findById(savedMessage._id).populate('sender' , 'name userName email pfpUrl') ;
 
         const io = getIo() ;
         io.to(String(conversationId)).emit('recieveMessage' , populateMessage) ;
@@ -65,7 +65,7 @@ const getConversations = async (req ,res ,next)=>{
 const getConversation = async (req ,res ,next)=>{
     try { 
         let id = req.params.id ; 
-        let conversation = await Conversation.findById(id).populate('participants' , 'userName email online pfpUrl').populate('lastMessage' , 'content sender type readBy createdAt') ;
+        let conversation = await Conversation.findById(id).populate('participants' , 'userName email online pfpUrl').populate({path:'lastMessage', populate:{path:'sender', select:'userName email pfpUrl'}});
         res.json({
             success: true , 
             conversation: conversation
@@ -96,13 +96,6 @@ const getMessages = async (req, res ,next)=>{
             messages: messages
         })
 
-        const userId = req.user._id ;
-        await Message.updateMany({conversation: conversationId , sender: {$ne: userId} , readBy: {$ne: userId}},{
-            $push:{readBy: userId }
-        })
-        
-        const io = getIo() ; 
-        io.to(conversationId).emit("conversationOpened" , conversationId) // hadi rigli 3la 7sabha 
     } catch (error) {
         next(error)
     }

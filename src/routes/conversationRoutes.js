@@ -2,6 +2,7 @@ const express = require('express') ;
 const Router = express.Router() ; 
 
 const multerUpload = require('../config/multer') ; 
+const {sendMessagePic, uploadPfp} = require('../middlewares/cloudinaryMiddleware')
 const checkAuth = require('../middlewares/authMiddleware')
 
 const {sendMessage ,getConversation, getConversations ,getMessages ,getSearchResults ,checkConversationExists, getUserInfo} = require('../controllers/conversationsController')
@@ -16,8 +17,8 @@ Router.route('/conversation/:id').get(checkAuth , getConversation) ;
 Router.route('/conversations').get(checkAuth , getConversations)
 
 // send message to conversation if exists or create new conversation 
-Router.route('/messages/:conversationId').post(checkAuth , sendMessage); 
-Router.route('/messages').post(checkAuth , sendMessage); 
+Router.route('/messages/:conversationId').post( checkAuth ,multerUpload.single('file'),sendMessagePic , sendMessage); 
+Router.route('/messages').post(checkAuth ,multerUpload.single('file'),sendMessagePic , sendMessage); 
 
 // get all messages  of conversation 
 Router.route('/messages/:conversationId').get(checkAuth , getMessages) ; 
