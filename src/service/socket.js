@@ -27,7 +27,7 @@ const connectSocket  = (server)=>{
         socket.on("writing", ({ conversationId, userId, isTyping }) => {
             socket.to(conversationId).emit("writing", {
                 userId,
-                isTyping, // true = typing, false = stopped
+                isTyping, 
             });
             console.log(`User ${userId} is ${isTyping ? "typing" : "not typing"} in conversation ${conversationId}`);
         });
