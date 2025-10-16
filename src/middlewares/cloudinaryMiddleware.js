@@ -22,6 +22,7 @@ const uploadPfp = async (req ,res ,next)=>{
         return next(err) ; 
     }
 }
+
 const sendMessagePic = async (req ,res ,next)=>{
     if(!req.file) return next()
     let file = req.file; 

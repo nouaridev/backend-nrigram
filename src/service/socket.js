@@ -17,6 +17,7 @@ const connectSocket  = (server)=>{
         socket.joinedConversations = new Set();
         setUserOnlineStatus(socket.userId , true) ;
 
+
         socket.on('joinConversation' , async({conversationId ,userId})=>{
             socket.join(conversationId.toString()); 
             socket.joinedConversations.add(conversationId) ;
