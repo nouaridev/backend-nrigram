@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { User } = require("../models/User");
 const appError = require("../utils/apiError");
 const bcrypt = require('bcrypt')
@@ -10,7 +11,6 @@ const editProfile =async (req , res ,next)=>{
             let info = {
                 name: req.body.name , 
                 userName : req.body.userName , 
-                PhoneNumber: req.body.PhoneNumber , 
                 bio: req.body.bio 
             }
             if(req.pfpUrl){
@@ -100,7 +100,17 @@ const updatePrivacy = async(req, res ,next)=>{
     }
 }
 
+const getProfileData = async(req,res,next)=>{
+    try{
+        const user = req.user ; 
+        const userData = await User.findById(user._id , {password: 0}); 
+        res.status(200).json(userData) 
+    }catch(error){
+        next(err)
+    }
+}
 
 
 
-module.exports = {editProfile , editEmail , editPassword , updatePrivacy}
+
+module.exports = {getProfileData ,editProfile , editEmail , editPassword , updatePrivacy}
