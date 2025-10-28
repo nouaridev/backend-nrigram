@@ -31,21 +31,28 @@ const editProfile =async (req , res ,next)=>{
 const editEmail = async(req, res ,next )=>{
     try {
         let user = req.user ; 
-        console.log(user)
-        if(!req.body.email){
-          return  next(new appError('no email is provided to update', 422))
+        if (!req.body.email || !req.body.password) {
+            return next(new appError('new email and password are required', 422));
         }
+    const currentUser = await User.findById(user._id);
 
-        let newData = {
-            email : req.body.email 
-        }; 
-        console.log(newData)
-        let updated = await User.findByIdAndUpdate(user._id, newData , {new: true})
-        console.log(updated)
-        res.status(200).json({
-            success: true, 
-            user: updated 
-        })
+    if (!currentUser) {
+        return next(new appError('User not found', 404));
+    }
+    const isMatch = await bcrypt.compare(req.body.password, currentUser.password);
+    if (!isMatch) {
+        return next(new appError('Invalid password!', 401));
+    }
+    let newData = {
+        email : req.body.email 
+    }; 
+    currentUser.email = req.body.email;
+    await currentUser.save()
+
+    res.status(200).json({
+        success: true,
+        user: currentUser
+    });
 
     } catch (error) {
         next(error)
@@ -53,20 +60,30 @@ const editEmail = async(req, res ,next )=>{
 }
 
 
+
 const editPassword = async(req, res ,next )=>{
     try {
         let user = req.user ; 
         if(!req.body.password){
-           return next(new appError('no password is provided to update', 422))
+            return next(new appError('no password is provided to update', 422))
         }
+        if(!req.body.oldPassword){
+            return next(new appError('no old password is provided' , 422))
+        }
+
         let newData = {
             password : req.body.password 
         }; 
 
-        let updated = await User.findByIdAndUpdate(user._id, newData , {new: true})
+        const currentUser = await User.findById(user._id); 
+        console.log(req.body.oldPassword)
+        let passCheck = await bcrypt.compare(req.body.oldPassword , currentUser.password); 
+        if(!passCheck){return next(new appError('current password is wrong' , 422))}
+        currentUser.password = req.body.password ; 
+        await currentUser.save()
         res.status(200).json({
             success: true, 
-            user: updated 
+       
         })
 
     } catch (error) {
