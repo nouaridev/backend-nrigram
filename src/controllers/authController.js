@@ -30,7 +30,8 @@ const signUp = async(req , res ,next)=>{
                 id: user._id,
                 email: user.email,
                 userName: user.userName,
-                pfpUrl: user.pfpUrl
+                pfpUrl: user.pfpUrl , 
+                privacy: user.privacy
             }  ,
             token: tkn
         })
@@ -70,7 +71,8 @@ const signIn = async(req, res ,next) => {
         id: user._id,
         email: user.email,
         userName: user.userName,
-        pfpUrl: user.pfpUrl
+        pfpUrl: user.pfpUrl, 
+        privacy: user.privacy
       },
       token
     });
@@ -97,7 +99,8 @@ const refreshToken = async(req, res ,next) => {
                 id: userInfo._id,
                 email: userInfo.email,
                 userName: userInfo.userName,
-                pfpUrl: userInfo.pfpUrl
+                pfpUrl: userInfo.pfpUrl, 
+                privacy: userInfo.privacy
             } 
         });
     } catch (err) {
